@@ -48,6 +48,6 @@ runs:
             curl -v -u "${{ inputs.fireclover-client-id }}:${{ inputs.fireclover-client-secret }}" -H "content-type: application/json" "${{ inputs.login-server-token-endpoint || 'https://login.ms.fireclover.cloud/oauth2/token' }}" -d '{"grant_type":"client_credentials"}' -o token.json
             jq -r '.access_token' token.json > $AWS_WEB_IDENTITY_TOKEN_FILE
         fi
-        echo "AWS_WEB_IDENTITY_TOKEN_FILE=$AWS_WEB_IDENTITY_TOKEN_FILE" >> $GITHUB_ENV
-        echo "AWS_ROLE_SESSION_NAME=$AWS_ROLE_SESSION_NAME" >> $GITHUB_ENV
-        echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
+        echo "AWS_WEB_IDENTITY_TOKEN_FILE=${{ env.AWS_WEB_IDENTITY_TOKEN_FILE }}" >> $GITHUB_ENV
+        echo "AWS_ROLE_SESSION_NAME=${{ env.AWS_ROLE_SESSION_NAME }}" >> $GITHUB_ENV
+        echo "AWS_ROLE_ARN=${{ env.AWS_ROLE_ARN }}" >> $GITHUB_ENV
