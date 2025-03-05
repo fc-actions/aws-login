@@ -1,0 +1,34 @@
+# action.yml
+name: 'FireClover AWS Login'
+description: 'FireClover AWS Login'
+branding:
+  icon: 'log-in'
+  color: 'orange'
+
+inputs:
+  fireclover-client-id:
+    description: 'The FireClover CICD Client ID'
+    required: true
+  fireclover-client-secret:
+    description: 'The FireClover CICD Client Secret'
+    required: true
+  login-server-token-endpoint:
+    description: 'The FireClover login server to authenticate to'
+  aws-web-identity-token-file:
+    description: 'The file storing the temporary JWT used for AWS'
+    
+runs:
+  using: composite
+  steps:
+    - name: Config AWS creds
+      run: |
+        if [ -z "$ACTIONS_RUNNER_DEBUG" ]
+        then
+            curl -s -u "${{ inputs.fireclover-client-id }}:${{ inputs.fireclover-client-secret }}" -H "content-type: application/json" "${{ inputs.login-server-token-endpoint || 'https://login.ms.fireclover.cloud/oauth2/token' }}" -d '{"grant_type":"client_credentials"}' | jq -r '.access_token' > $AWS_WEB_IDENTITY_TOKEN_FILE
+        else
+            curl -v -u "${{ inputs.fireclover-client-id }}:${{ inputs.fireclover-client-secret }}" -H "content-type: application/json" "${{ inputs.login-server-token-endpoint || 'https://login.ms.fireclover.cloud/oauth2/token' }}" -d '{"grant_type":"client_credentials"}' -o token.json
+            jq -r '.access_token' token.json > $AWS_WEB_IDENTITY_TOKEN_FILE
+        fi
+        echo "AWS_WEB_IDENTITY_TOKEN_FILE=$AWS_WEB_IDENTITY_TOKEN_FILE" >> $GITHUB_ENV
+      env:
+        AWS_WEB_IDENTITY_TOKEN_FILE: ${{ inputs.aws-web-identity-token-file || '/tmp/aws-token-file' }}
