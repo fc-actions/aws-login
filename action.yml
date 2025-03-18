@@ -32,8 +32,17 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Config AWS creds
+    - uses: aws-actions/configure-aws-credentials@v4
+      if: ${{ runner.environment == 'github-hosted' }}
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}:role/${{ inputs.aws-role-name || 'FireCloverAdmin' }}
+        role-session-name: ${{ inputs.aws-role-session-name || 'FireCloverActions' }}
+        aws-region: ${{ inputs.aws-region || 'eu-north-1' }}
+
+    - shell: bash
+      if: ${{ runner.environment != 'github-hosted' }}
       run: |
+        echo "Config AWS creds"
         export AWS_ROLE_SESSION_NAME=${{ inputs.aws-role-session-name || 'FireCloverActions' }}
         export AWS_REGION=${{ inputs.aws-region || 'eu-north-1' }}
         export AWS_ACCOUNT_ID=${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}
