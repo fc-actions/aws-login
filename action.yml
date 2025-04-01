@@ -28,6 +28,8 @@ inputs:
     required: false
   aws-role-name:
     description: 'The AWS role name to use for the session. Defaults to FireCloverAdmin'
+  verify:
+    default: false
 
 runs:
   using: composite
@@ -52,3 +54,11 @@ runs:
         echo "AWS_WEB_IDENTITY_TOKEN_FILE=$AWS_WEB_IDENTITY_TOKEN_FILE" >> $GITHUB_ENV
         echo "AWS_ROLE_SESSION_NAME=$AWS_ROLE_SESSION_NAME" >> $GITHUB_ENV
         echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
+
+    - shell: bash
+      if: ${{ inputs.verify }}
+      run: |
+        echo "Verify credentials"
+        cat $AWS_WEB_IDENTITY_TOKEN_FILE
+        pip3 install awscli --break-system-packages
+        aws sts get-caller-identity
