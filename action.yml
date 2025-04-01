@@ -56,9 +56,9 @@ runs:
         echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
 
     - shell: bash
-      if: ${{ inputs.verify }}
+      if: ${{ inputs.verify == true }}
       run: |
         echo "Verify credentials"
         cat $AWS_WEB_IDENTITY_TOKEN_FILE
-        pip3 install awscli --break-system-packages
+        pip3 install awscli -q -q -q --break-system-packages
         aws sts get-caller-identity
