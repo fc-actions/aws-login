@@ -14,6 +14,7 @@ inputs:
     required: true
   login-server-token-endpoint:
     description: 'The FireClover login server to authenticate to'
+    default: 'https://login.aws.fireclover.cloud/oauth2/token'
   aws-account-id:
     description: 'The AWS account ID to deploy into. Default to env $AWS_ACCOUNT_ID'
     required: false
@@ -39,7 +40,7 @@ runs:
       with:
         role-to-assume: arn:aws:iam::${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}:role/${{ inputs.aws-role-name || 'FireCloverAdmin' }}
         role-session-name: ${{ inputs.aws-role-session-name || 'FireCloverActions' }}
-        aws-region: ${{ inputs.aws-region || 'eu-north-1' }}
+        aws-region: ${{ inputs.aws-region || 'us-east-1' }}
 
     - shell: bash
       if: ${{ inputs.fireclover-client-id && inputs.fireclover-client-secret }}
@@ -50,13 +51,13 @@ runs:
         export AWS_ACCOUNT_ID=${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}
         export AWS_ROLE_ARN=arn:aws:iam::${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}:role/${{ inputs.aws-role-name || 'FireCloverAdmin' }}
         export AWS_WEB_IDENTITY_TOKEN_FILE=${{ inputs.aws-web-identity-token-file || '/tmp/aws-token-file' }}
-        curl -s -u "${{ inputs.fireclover-client-id }}:${{ inputs.fireclover-client-secret }}" -H "content-type: application/json" "${{ inputs.login-server-token-endpoint || 'https://login.ms.fireclover.cloud/oauth2/token' }}" -d '{"grant_type":"client_credentials"}' | jq -r '.access_token' > $AWS_WEB_IDENTITY_TOKEN_FILE
+        curl -s -u "${{ inputs.fireclover-client-id }}:${{ inputs.fireclover-client-secret }}" -H "content-type: application/json" "${{ inputs.login-server-token-endpoint || 'https://login.aws.fireclover.cloud/oauth2/token' }}" -d '{"grant_type":"client_credentials"}' | jq -r '.access_token' > $AWS_WEB_IDENTITY_TOKEN_FILE
         echo "AWS_WEB_IDENTITY_TOKEN_FILE=$AWS_WEB_IDENTITY_TOKEN_FILE" >> $GITHUB_ENV
         echo "AWS_ROLE_SESSION_NAME=$AWS_ROLE_SESSION_NAME" >> $GITHUB_ENV
         echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
 
     - shell: bash
-      if: ${{ inputs.verify == true }}
+      if: ${{ inputs.verify }}
       run: |
         echo "Verify credentials"
         cat $AWS_WEB_IDENTITY_TOKEN_FILE
