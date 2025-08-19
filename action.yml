@@ -22,7 +22,7 @@ inputs:
     description: 'What AWS region to deploy to'
     required: false
   aws-role-session-name:
-    description: 'What name to use for the session'
+    description: 'What name to use for the session. Defaults to FireCloverActions'
     required: false
   aws-web-identity-token-file:
     description: 'The file storing the temporary JWT used for AWS'
