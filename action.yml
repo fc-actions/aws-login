@@ -48,7 +48,7 @@ runs:
     - shell: bash
       if: ${{ inputs.fireclover-client-id && inputs.fireclover-service-account-token }}
       run: |
-        echo "Config AWS creds DEBUG"
+        echo "Config AWS creds"
         export AWS_ROLE_SESSION_NAME=${{ inputs.aws-role-session-name || 'FireCloverActions' }}
         export AWS_REGION=${{ inputs.aws-region || 'eu-north-1' }}
         export AWS_ACCOUNT_ID=${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}
@@ -59,7 +59,6 @@ runs:
         echo "AWS_WEB_IDENTITY_TOKEN_FILE=$AWS_WEB_IDENTITY_TOKEN_FILE" >> $GITHUB_ENV
         echo "AWS_ROLE_SESSION_NAME=$AWS_ROLE_SESSION_NAME" >> $GITHUB_ENV
         echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
-        echo "Verify: ${{ inputs.verify }}"
         if [ "${{ inputs.verify }}" == "true" ]
         then
           echo "Verify credentials"
