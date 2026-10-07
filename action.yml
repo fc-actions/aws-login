@@ -73,5 +73,6 @@ runs:
           then
             cat $AWS_WEB_IDENTITY_TOKEN_FILE
           fi
-          aws sts get-caller-identity || (pip3 install awscli -q -q -q --break-system-packages && aws sts get-caller-identity)
+          aws --version || pip3 install awscli -q -q -q --break-system-packages 
+          aws sts get-caller-identity
         fi
