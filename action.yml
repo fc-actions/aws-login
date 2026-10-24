@@ -49,30 +49,38 @@ runs:
 
     - shell: bash
       if: ${{ inputs.cloudless-client-id && inputs.cloudless-service-account-token }}
+      env:
+        CLIENT_ID: ${{ inputs.cloudless-client-id }}
+        SA_USER: ${{ inputs.cloudless-service-account }}
+        SA_TOKEN: ${{ inputs.cloudless-service-account-token }}
+        TOKEN_ENDPOINT: ${{ inputs.login-server-token-endpoint }}
+        ACCOUNT_ID: ${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}
+        ROLE_NAME: ${{ inputs.aws-role-name || 'CloudlessAdmin' }}
+        TOKEN_FILE: ${{ inputs.aws-web-identity-token-file || format('{0}/aws-token-file', runner.temp) }}
       run: |
-        echo "Config AWS creds"
-        export AWS_ROLE_SESSION_NAME=${{ inputs.aws-role-session-name || 'CloudlessActions' }}
-        export AWS_REGION=${{ inputs.aws-region || 'eu-north-1' }}
-        export AWS_ACCOUNT_ID=${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}
-        export AWS_ROLE_ARN=arn:aws:iam::${{ inputs.aws-account-id || env.AWS_ACCOUNT_ID }}:role/${{ inputs.aws-role-name || 'CloudlessAdmin' }}
-        export AWS_WEB_IDENTITY_TOKEN_FILE=${{ inputs.aws-web-identity-token-file || '/tmp/aws-token-file' }}
-        DEBUG='-s'
-        if [ "${{ inputs.debug }}" == "true" ]
-        then
-          DEBUG='-v'
-        fi
-        curl $DEBUG -H "content-type: application/x-www-form-urlencoded" "${{ inputs.login-server-token-endpoint || 'https://sso.cloudless.no/application/o/token/' }}" \
-          -d "grant_type=client_credentials&client_id=${{ inputs.cloudless-client-id }}&username=${{ inputs.cloudless-service-account }}&scope=profile&password=${{ inputs.cloudless-service-account-token }}" | jq -j '.id_token' > $AWS_WEB_IDENTITY_TOKEN_FILE
-        echo "AWS_WEB_IDENTITY_TOKEN_FILE=$AWS_WEB_IDENTITY_TOKEN_FILE" >> $GITHUB_ENV
-        echo "AWS_ROLE_SESSION_NAME=$AWS_ROLE_SESSION_NAME" >> $GITHUB_ENV
-        echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
-        if [ "${{ inputs.verify }}" == "true" ]
-        then
-          echo "Verify credentials"
-          if [ "${{ inputs.debug }}" == "true" ]
-          then
-            cat $AWS_WEB_IDENTITY_TOKEN_FILE
-          fi
-          aws --version || pip3 install awscli -q -q -q --break-system-packages 
+        set -euo pipefail
+        CURL_OPTS=(-sS --fail-with-body)
+        [ "${{ inputs.debug }}" = "true" ] && CURL_OPTS+=(-v)
+
+        ID_TOKEN=$(curl "${CURL_OPTS[@]}" "$TOKEN_ENDPOINT" \
+          --data-urlencode "grant_type=client_credentials" \
+          --data-urlencode "client_id=$CLIENT_ID" \
+          --data-urlencode "username=$SA_USER" \
+          --data-urlencode "password=$SA_TOKEN" \
+          --data-urlencode "scope=profile" | jq -er '.id_token')
+        echo "::add-mask::$ID_TOKEN"
+        printf '%s' "$ID_TOKEN" > "$TOKEN_FILE"
+
+        {
+          echo "AWS_WEB_IDENTITY_TOKEN_FILE=$TOKEN_FILE"
+          echo "AWS_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME}"
+          echo "AWS_ROLE_SESSION_NAME=${{ inputs.aws-role-session-name || 'CloudlessActions' }}"
+          echo "AWS_REGION=${{ inputs.aws-region || 'eu-north-1' }}"
+        } >> "$GITHUB_ENV"
+
+        if [ "${{ inputs.verify }}" = "true" ]; then
+          export AWS_WEB_IDENTITY_TOKEN_FILE="$TOKEN_FILE"
+          export AWS_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME}"
+          aws --version >/dev/null 2>&1 || pip3 install awscli -q --break-system-packages
           aws sts get-caller-identity
         fi
