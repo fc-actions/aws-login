@@ -62,7 +62,7 @@ runs:
           DEBUG='-v'
         fi
         curl $DEBUG -H "content-type: application/x-www-form-urlencoded" "${{ inputs.login-server-token-endpoint || 'https://sso.cloudless.no/application/o/token/' }}" \
-          -d "grant_type=client_credentials&client_id=${{ inputs.cloudless-client-id }}&username=${{ inputs.cloudless-service-account }}&scope=profile&password=${{ inputs.cloudless-service-account-token }}" | jq -r '.access_token' > $AWS_WEB_IDENTITY_TOKEN_FILE
+          -d "grant_type=client_credentials&client_id=${{ inputs.cloudless-client-id }}&username=${{ inputs.cloudless-service-account }}&scope=profile&password=${{ inputs.cloudless-service-account-token }}" | jq -j '.id_token' > $AWS_WEB_IDENTITY_TOKEN_FILE
         echo "AWS_WEB_IDENTITY_TOKEN_FILE=$AWS_WEB_IDENTITY_TOKEN_FILE" >> $GITHUB_ENV
         echo "AWS_ROLE_SESSION_NAME=$AWS_ROLE_SESSION_NAME" >> $GITHUB_ENV
         echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
